@@ -82,8 +82,7 @@ With this in place you can enter
         app.build()
 
         // Not shown:  Hook up app to your favorite serverless and slack/msteams environment
-
-}
+```
 
 ## License
 
@@ -92,4 +91,8 @@ MIT
 ## Prior Art
 
 [https://github.com/tj/commander.js](https://github.com/tj/commander.js)
-```
+
+
+## API Reference Specification
+
+[![IOPA](http://iopa.io/iopa.png)](http://iopa.io)
