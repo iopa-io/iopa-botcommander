@@ -1,0 +1,38 @@
+{
+    "name": "iopa-botcommander",
+    "version": "3.0.0",
+    "description": "Use the IOPA framework for isomorphic command line bots",
+    "author": "iopa <build@iopa.io>",
+    "license": "Apache-2.0",
+    "main": "dist/index.js",
+    "types": "src/index.ts",
+    "ts:main": "src/index.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/iopa-io/iopa-botcommander.git"
+    },
+    "dependencies": {},
+    "keywords": [
+        "iopa",
+        "serverless",
+        "commander",
+        "parser",
+        "yargs",
+        "tj",
+        "cloudflare",
+        "workers",
+        "functions",
+        "lambda",
+        "azure function",
+        "google cloud function",
+        "node",
+        "bot",
+        "conversational agent"
+    ],
+    "engines": {},
+    "scripts": {
+        "build": "tsc",
+        "format": "prettier --ignore-path ../../.gitignore --write '**/*.{js,jsx,ts,tsx,json,md}'"
+    },
+    "homepage": "http://iopa.io"
+}
