@@ -1,3 +1,8 @@
+/* eslint-disable no-cond-assign */
+/* eslint-disable no-bitwise */
+/* eslint-disable prefer-destructuring */
+/* eslint-disable no-continue */
+/* eslint-disable no-async-promise-executor */
 /**
  * BOT COMMANDER ASYNC
  *
@@ -18,6 +23,7 @@
  */
 
 import { util } from 'iopa'
+
 export const { EventEmitter } = util
 
 export interface MetaData {
@@ -59,14 +65,23 @@ export interface ParserConfig {
 
 export class Option {
     flags: string
+
     required: boolean
+
     optional: boolean
+
     bool: boolean
+
     short?: string
+
     negate: boolean
+
     long: string
+
     description: string
+
     defaultValue: any
+
     parseValue: Function
 
     /** Initialize a new `Option` with the given `flags` and `description` */
@@ -75,12 +90,13 @@ export class Option {
         this.required = flags.indexOf('<') >= 0
         this.optional = flags.indexOf('[') >= 0
         this.negate = flags.indexOf('-no-') !== -1
-        let flagsArray = flags.split(/[ ,|]+/)
-        if (flagsArray.length > 1 && !/^[[<]/.test(flagsArray[1]))
+        const flagsArray = flags.split(/[ ,|]+/)
+        if (flagsArray.length > 1 && !/^[[<]/.test(flagsArray[1])) {
             this.short = flagsArray.shift()
+        }
         this.long = flagsArray.shift()
         this.description = description || ''
-        this.parseValue = arg => arg
+        this.parseValue = (arg) => arg
     }
 
     /** Initialize a new `Option` with the given `flags` and `description` */
@@ -108,11 +124,17 @@ export class BotCommand extends EventEmitter {
     //
 
     private _name: string
+
     private _alias: string = null
+
     private _description: string
+
     private _argsDescription: { [argName: string]: string }
+
     private _usage: string
-    private _noHelp: boolean = false
+
+    private _noHelp = false
+
     private _prefixes: string[] = null
 
     //
@@ -120,20 +142,25 @@ export class BotCommand extends EventEmitter {
     //
 
     private _cmdArgs: ArgDetails[] = []
+
     private _cmdOptions: Option[] = []
 
     //
     // Command hierarchy (children and parent)
 
     private _commands: BotCommand[] = []
+
     private _parent: this
 
     //
     // Help flags
     //
     private _helpFlags = '-h, --help'
+
     private _helpDescription = 'output usage information'
+
     private _helpShortFlag = '-h'
+
     private _helpLongFlag = '--help'
 
     //
@@ -161,8 +188,8 @@ export class BotCommand extends EventEmitter {
         nameAndArgs: string,
         config: CommandConfig = {}
     ): BotCommand {
-        var args = nameAndArgs.split(/ +/)
-        var cmd = new BotCommand(args.shift())
+        const args = nameAndArgs.split(/ +/)
+        const cmd = new BotCommand(args.shift())
         cmd.setParserConfig(this.parserConfig)
         cmd._noHelp = !!config.noHelp
         cmd._helpFlags = this._helpFlags
@@ -204,8 +231,8 @@ export class BotCommand extends EventEmitter {
         if (!args.length) {
             return this
         }
-        args.forEach(arg => {
-            var argDetails: ArgDetails = {
+        args.forEach((arg) => {
+            const argDetails: ArgDetails = {
                 required: false,
                 name: '',
                 variadic: false,
@@ -219,6 +246,8 @@ export class BotCommand extends EventEmitter {
                 case '[':
                     argDetails.name = arg.slice(1, -1)
                     break
+                default:
+                /** noop */
             }
 
             if (
@@ -237,7 +266,10 @@ export class BotCommand extends EventEmitter {
 
     /** Register callback `fn` for the command */
     public action(fn: (context: any, data: any) => void): BotCommand {
-        var listener = async (prevParsed: ParsedResult, metadata: MetaData) => {
+        const listener = async (
+            prevParsed: ParsedResult,
+            metadata: MetaData
+        ) => {
             let args = prevParsed.args || []
 
             const parsed = this.parseLine((prevParsed.unknown || []).join(' '))
@@ -259,7 +291,7 @@ export class BotCommand extends EventEmitter {
                 parsed.unknown.length > 0 &&
                 !this.parserConfig.allowUnknownOption
             ) {
-                let msg = []
+                const msg = []
                 msg.push(this.unknownOption(parsed.unknown[0]))
                 this._checkShowHelp(msg)
                 await this.send(metadata, msg.join('\n'))
@@ -269,7 +301,7 @@ export class BotCommand extends EventEmitter {
             args = prevParsed.args.concat(parsed.args)
             const data = this.cmdOptionsObject(prevParsed.data, parsed.data)
 
-            let errors = []
+            const errors = []
             this._cmdArgs.forEach((arg, i) => {
                 if (args[i] && args[i].match(/["'].+["']/)) {
                     data[arg.name] = args[i].substring(1, args[i].length - 1)
@@ -302,31 +334,33 @@ export class BotCommand extends EventEmitter {
                 )
             }
             metadata.resolve()
-            return
         }
 
-        var parent = this._parent || this
-        var name = parent === this ? '*' : this._name
-        this.on('command:' + name, listener)
-        if (this._alias) this.on('command:' + this._alias, listener)
+        const parent = this._parent || this
+        const name = parent === this ? '*' : this._name
+        this.on(`command:${name}`, listener)
+        if (this._alias) {
+            this.on(`command:${this._alias}`, listener)
+        }
         return this
     }
 
     /** Register callback `fn` for the api */
     public api(fn: (context: any, data: any) => void): BotCommand {
-        var parent = this._parent || this
-        var name = parent === this ? '*' : this._name
+        const parent = this._parent || this
+        const name = parent === this ? '*' : this._name
 
         this._noHelp = true
 
-        var listener = async (metadata: MetaData, data: any) => {
+        const listener = async (metadata: MetaData, data: any) => {
             await fn.call(this, metadata.context, data)
             metadata.resolve()
-            return
         }
 
-        this._parent.on('api:' + name, listener)
-        if (this._alias) parent.on('api:' + this._alias, listener)
+        this._parent.on(`api:${name}`, listener)
+        if (this._alias) {
+            parent.on(`api:${this._alias}`, listener)
+        }
 
         return this
     }
@@ -338,12 +372,12 @@ export class BotCommand extends EventEmitter {
         await new Promise((resolve, reject) => {
             metadata = { context, resolve, reject }
 
-            let command = this._commands.find(
-                cmd => cmd._name === name || cmd._alias === name
+            const command = this._commands.find(
+                (cmd) => cmd._name === name || cmd._alias === name
             )
 
             if (command) {
-                this.emit('api:' + name, metadata, data)
+                this.emit(`api:${name}`, metadata, data)
             } else {
                 resolve()
             }
@@ -402,24 +436,25 @@ export class BotCommand extends EventEmitter {
         description?: string,
         defaultValue?: any
     ): BotCommand
+
     public option(
         flags: string,
         description?: string,
         fn?: ((arg1: any, arg2: any) => void) | RegExp,
         defaultValue?: any
     ): BotCommand {
-        let option = new Option(flags, description),
-            oname = option.name(),
-            name = option.attributeName()
+        const option = new Option(flags, description)
+        const oname = option.name()
+        const name = option.attributeName()
 
         // default as 3rd arg
         if (typeof fn !== 'function') {
             if (fn instanceof RegExp) {
                 // This is a bit simplistic (especially no error messages), and probably better handled by caller using custom option processing.
                 // No longer documented in README, but still present for backwards compatibility.
-                var regex = fn
+                const regex = fn
                 fn = (val, def) => {
-                    var m = regex.exec(val)
+                    const m = regex.exec(val)
                     return m ? m[0] : def
                 }
             } else {
@@ -435,7 +470,7 @@ export class BotCommand extends EventEmitter {
             typeof defaultValue === 'boolean'
         ) {
             if (option.negate) {
-                var opts = this.cmdOptionsObject({}, {})
+                const opts = this.cmdOptionsObject({}, {})
                 defaultValue = Object.prototype.hasOwnProperty.call(opts, name)
                     ? opts[name]
                     : true
@@ -448,7 +483,7 @@ export class BotCommand extends EventEmitter {
 
         this._cmdOptions.push(option)
 
-        this.on('option:' + oname, val => {
+        this.on(`option:${oname}`, (val) => {
             if (val !== null && fn) {
                 val = (fn as Function)(
                     val,
@@ -476,7 +511,7 @@ export class BotCommand extends EventEmitter {
     /**
      * Allow unknown _cmdOptions on the command line.
      */
-    public configAllowUnknownOption(arg: boolean = true) {
+    public configAllowUnknownOption(arg = true) {
         this.parserConfig.allowUnknownOption = arg
         return this
     }
@@ -488,13 +523,13 @@ export class BotCommand extends EventEmitter {
     }
 
     /**  Show full command help when an error occurs */
-    public configShowHelpOnError(arg: boolean = true) {
+    public configShowHelpOnError(arg = true) {
         this.parserConfig.showHelpOnError = arg
         return this
     }
 
     /** Show full command help when no command is found */
-    public configShowHelpOnEmpty(arg: boolean = true) {
+    public configShowHelpOnEmpty(arg = true) {
         this.parserConfig.showHelpOnEmpty = arg
         return this
     }
@@ -521,7 +556,7 @@ export class BotCommand extends EventEmitter {
             const metadata: MetaData = { context, resolve, reject }
 
             if (this._prefixes) {
-                let prefixFound = this._prefixes.find(prefix =>
+                const prefixFound = this._prefixes.find((prefix) =>
                     line.startsWith(prefix)
                 )
                 if (prefixFound == null) {
@@ -548,22 +583,22 @@ export class BotCommand extends EventEmitter {
     /** Parse _cmdOptions from `argv` returning `argv`  void of these _cmdOptions  */
     private parseLine(line: string, prevResult?: ParsedResult): ParsedResult {
         const rawArgs = line
-            .split(/(\".+?\")|(\'.+?\')|\s+/g)
-            .filter(a => a && a.length > 0)
+            .split(/(".+?")|('.+?')|\s+/g)
+            .filter((a) => a && a.length > 0)
 
-        let argv = this.normalize(rawArgs)
-        let args: string[] = []
+        const argv = this.normalize(rawArgs)
+        const args: string[] = []
 
-        var errors: string[] = [],
-            data: DataValues = prevResult ? prevResult.data : {},
-            len = argv.length,
-            literal,
-            option,
-            arg
+        const errors: string[] = []
+        const data: DataValues = prevResult ? prevResult.data : {}
+        const len = argv.length
+        let literal
+        let option
+        let arg
 
-        var unknownOptions = []
+        const unknownOptions = []
 
-        for (var i = 0; i < len; ++i) {
+        for (let i = 0; i < len; ++i) {
             arg = argv[i]
 
             if (literal) {
@@ -585,7 +620,7 @@ export class BotCommand extends EventEmitter {
                     if (arg == null) {
                         errors.push(this.optionMissingArgument(option))
                     } else {
-                        this.emit('option:' + name, arg)
+                        this.emit(`option:${name}`, arg)
                     }
                     data[name] = option.parseValue(arg, data[name])
                 } else if (option.optional) {
@@ -596,10 +631,10 @@ export class BotCommand extends EventEmitter {
                         ++i
                     }
                     data[name] = option.parseValue(arg, data[name])
-                    this.emit('option:' + option.name(), arg)
+                    this.emit(`option:${option.name()}`, arg)
                 } else {
                     data[name] = option.parseValue(null, data[name])
-                    this.emit('option:' + option.name())
+                    this.emit(`option:${option.name()}`)
                 }
                 continue
             }
@@ -639,58 +674,57 @@ export class BotCommand extends EventEmitter {
         parsed: ParsedResult,
         metadata: MetaData
     ): Promise<void> {
-        const args = parsed.args
+        const { args } = parsed
         let name
         if (args.length && args[0] !== '') {
             name = args[0]
             if (this.parserConfig.lowerCase) {
                 name = name.toLowerCase()
             }
-            if ('help' === name && 1 === args.length) {
+            if (name === 'help' && args.length === 1) {
                 this.outputHelp(metadata)
                 return
-            } else if ('help' === name) {
+            }
+            if (name === 'help') {
                 args.shift()
                 name = args[0]
                 parsed.unknown.push('--help')
                 parsed.rawArgs = parsed.rawArgs.slice(1)
                 parsed.rawArgs.push('--help')
             }
-            if (this.listeners.has('command:' + name)) {
+            if (this.listeners.has(`command:${name}`)) {
                 args.shift()
-                this.emit('command:' + name, parsed, metadata)
+                this.emit(`command:${name}`, parsed, metadata)
             } else {
-                let command = this._commands.find(
-                    cmd => cmd._name === name || cmd._alias === name
+                const command = this._commands.find(
+                    (cmd) => cmd._name === name || cmd._alias === name
                 )
                 if (command) {
-                    let line = parsed.rawArgs.slice(1).join(' ')
+                    const line = parsed.rawArgs.slice(1).join(' ')
                     const newResult = command.parseLine(line, parsed)
-                    command.emit('command:' + name, newResult, metadata)
-                    return
+                    command.emit(`command:${name}`, newResult, metadata)
                 } else {
                     this.emit('command:*', parsed, metadata)
-                    return
                 }
             }
         } else if (this.parserConfig.showHelpOnEmpty) {
             const helptext = this.outputHelpIfNecessary(parsed.unknown)
             if (helptext) {
-                return this.send(metadata, helptext)
+                await this.send(metadata, helptext)
             }
         }
     }
 
     /** Normalize `args`, splitting joined short flags   */
     private normalize(args: string[]) {
-        var ret: string[] = [],
-            arg: string,
-            lastOpt: Option,
-            index: number,
-            short: string,
-            opt: Option
+        let ret: string[] = []
+        let arg: string
+        let lastOpt: Option
+        let index: number
+        let short: string
+        let opt: Option
 
-        for (var i = 0, len = args.length; i < len; ++i) {
+        for (let i = 0, len = args.length; i < len; ++i) {
             arg = args[i]
             if (i > 0) {
                 lastOpt = this.cmdOptionFor(args[i - 1])
@@ -710,8 +744,9 @@ export class BotCommand extends EventEmitter {
                 } else {
                     arg.slice(1)
                         .split('')
-                        .forEach(c => {
-                            ret.push('-' + c)
+                        // eslint-disable-next-line no-loop-func
+                        .forEach((c) => {
+                            ret.push(`-${c}`)
                         })
                 }
             } else if (/^--/.test(arg) && ~(index = arg.indexOf('='))) {
@@ -726,7 +761,7 @@ export class BotCommand extends EventEmitter {
 
     /** Return an option matching `arg` if any */
     private cmdOptionFor(arg): Option | null {
-        for (var i = 0, len = this._cmdOptions.length; i < len; ++i) {
+        for (let i = 0, len = this._cmdOptions.length; i < len; ++i) {
             if (this._cmdOptions[i].is(arg)) {
                 return this._cmdOptions[i]
             }
@@ -739,13 +774,16 @@ export class BotCommand extends EventEmitter {
         prevData: DataValues,
         data: DataValues
     ): DataValues {
-        return this._cmdOptions.reduce((accum, opt) => {
-            const key = opt.attributeName()
-            if (accum[key] == null) {
-                accum[key] = opt.defaultValue
-            }
-            return accum
-        }, Object.assign({}, prevData, data))
+        return this._cmdOptions.reduce(
+            (accum, opt) => {
+                const key = opt.attributeName()
+                if (accum[key] == null) {
+                    accum[key] = opt.defaultValue
+                }
+                return accum
+            },
+            { ...prevData, ...data }
+        )
     }
 
     /** Argument `name` is missing */
@@ -757,9 +795,8 @@ export class BotCommand extends EventEmitter {
     private optionMissingArgument(option: Option, flag?) {
         if (flag) {
             return `  error: option ${option.flags} argument missing, got ${flag}`
-        } else {
-            return `  error: option ${option.flags} argument missing`
         }
+        return `  error: option ${option.flags} argument missing`
     }
 
     /** Unknown option `flag` */
@@ -773,14 +810,13 @@ export class BotCommand extends EventEmitter {
     }
 
     public get meta(): any {
-        var args = this._cmdArgs.map(arg => {
+        const args = this._cmdArgs.map((arg) => {
             return humanReadableArgName(arg)
         })
 
-        var usage =
-            '[--Options]' +
-            (this._commands.length ? ' [command]' : '') +
-            (this._cmdArgs.length ? ' ' + args.join(' ') : '')
+        const usage = `[--Options]${this._commands.length ? ' [command]' : ''}${
+            this._cmdArgs.length ? ` ${args.join(' ')}` : ''
+        }`
 
         return {
             description: this._description,
@@ -806,16 +842,20 @@ export class BotCommand extends EventEmitter {
      * Set an alias for the command
      */
     public alias(alias: string): BotCommand {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         let command: BotCommand = this
 
         if (this._commands.length !== 0) {
             command = this._commands[this._commands.length - 1]
         }
 
-        if (arguments.length === 0) return command._alias as any
+        if (arguments.length === 0) {
+            return command._alias as any
+        }
 
-        if (alias === command._name)
+        if (alias === command._name) {
             throw new Error("BotCommand alias can't be the same as its name")
+        }
 
         command._alias = alias
 
@@ -842,21 +882,21 @@ export class BotCommand extends EventEmitter {
     /** Return prepared commands */
     private prepareCommands() {
         return this._commands
-            .filter(cmd => {
+            .filter((cmd) => {
                 return !cmd._noHelp
             })
-            .map(cmd => {
-                var args = cmd._cmdArgs
-                    .map(arg => {
+            .map((cmd) => {
+                const args = cmd._cmdArgs
+                    .map((arg) => {
                         return humanReadableArgName(arg)
                     })
                     .join(' ')
 
                 return [
                     cmd._name +
-                        (cmd._alias ? '|' + cmd._alias : '') +
+                        (cmd._alias ? `|${cmd._alias}` : '') +
                         (cmd._cmdOptions.length ? ' [_cmdOptions]' : '') +
-                        (args ? ' ' + args : ''),
+                        (args ? ` ${args}` : ''),
                     cmd._description,
                 ]
             })
@@ -864,7 +904,7 @@ export class BotCommand extends EventEmitter {
 
     /** Return the largest command length */
     private largestCommandLength() {
-        var commands = this.prepareCommands()
+        const commands = this.prepareCommands()
         return commands.reduce((max, command) => {
             return Math.max(max, command[0].length)
         }, 0)
@@ -872,7 +912,7 @@ export class BotCommand extends EventEmitter {
 
     /** Return the largest option length */
     private largestOptionLength() {
-        var _cmdOptions = [].slice.call(this._cmdOptions)
+        const _cmdOptions = [].slice.call(this._cmdOptions)
         _cmdOptions.push({
             flags: this._helpFlags,
         })
@@ -891,7 +931,7 @@ export class BotCommand extends EventEmitter {
 
     /** Return the pad width */
     private padWidth() {
-        var width = this.largestOptionLength()
+        let width = this.largestOptionLength()
         if (this._argsDescription && this._cmdArgs.length) {
             if (this.largestArgLength() > width) {
                 width = this.largestArgLength()
@@ -909,40 +949,37 @@ export class BotCommand extends EventEmitter {
 
     /** Return help for _cmdOptions */
     private optionHelp() {
-        var width = this.padWidth()
+        const width = this.padWidth()
 
         // Append the help information
         return this._cmdOptions
-            .map(option => {
-                return (
-                    pad(option.flags, width) +
-                    '  ' +
-                    option.description +
-                    (!option.negate && option.defaultValue !== undefined
-                        ? ' (default: ' +
-                          JSON.stringify(option.defaultValue) +
-                          ')'
-                        : '')
-                )
+            .map((option) => {
+                return `${pad(option.flags, width)}  ${option.description}${
+                    !option.negate && option.defaultValue !== undefined
+                        ? ` (default: ${JSON.stringify(option.defaultValue)})`
+                        : ''
+                }`
             })
             .concat([
-                pad(this._helpFlags, width) + '  ' + this._helpDescription,
+                `${pad(this._helpFlags, width)}  ${this._helpDescription}`,
             ])
             .join('\n')
     }
 
     /** Return command help documentation */
     private commandHelp() {
-        if (!this._commands.length) return ''
+        if (!this._commands.length) {
+            return ''
+        }
 
-        var commands = this.prepareCommands()
-        var width = this.padWidth()
+        const commands = this.prepareCommands()
+        const width = this.padWidth()
 
         return [
             'Commands:',
             commands
-                .map(cmd => {
-                    var desc = cmd[1] ? '  ' + cmd[1] : ''
+                .map((cmd) => {
+                    const desc = cmd[1] ? `  ${cmd[1]}` : ''
                     return (desc ? pad(cmd[0], width) : cmd[0]) + desc
                 })
                 .join('\n\r')
@@ -953,59 +990,56 @@ export class BotCommand extends EventEmitter {
 
     /** Return bot help documentation */
     private helpInformation() {
-        var desc = []
+        let desc = []
         if (this._description) {
             desc = [this._description, '']
 
-            var argsDescription = this._argsDescription
+            const argsDescription = this._argsDescription
             if (argsDescription && this._cmdArgs.length) {
-                var width = this.padWidth()
+                const width = this.padWidth()
                 desc.push('Arguments:')
                 desc.push('')
-                this._cmdArgs.forEach(arg => {
+                this._cmdArgs.forEach((arg) => {
                     desc.push(
-                        '  ' +
-                            pad(arg.name, width) +
-                            '  ' +
+                        `  ${pad(arg.name, width)}  ${
                             argsDescription[arg.name]
+                        }`
                     )
                 })
                 desc.push('')
             }
         }
 
-        var cmdName = this._name
+        let cmdName = this._name
         if (this._alias) {
-            cmdName = cmdName + '|' + this._alias
+            cmdName = `${cmdName}|${this._alias}`
         }
-        var parentCmdNames = ''
+        let parentCmdNames = ''
         for (
-            var parentCmd = this._parent;
+            let parentCmd = this._parent;
             parentCmd;
             parentCmd = parentCmd._parent
         ) {
-            parentCmdNames = parentCmd._name + ' ' + parentCmdNames
+            parentCmdNames = `${parentCmd._name} ${parentCmdNames}`
         }
-        var usage = [
-            'Usage: ' + parentCmdNames + cmdName + ' ' + this.meta.usage,
+        const usage = [
+            `Usage: ${parentCmdNames}${cmdName} ${this.meta.usage}`,
             '',
         ]
 
-        var cmds = []
-        var commandHelp = this.commandHelp()
-        if (commandHelp) cmds = [commandHelp]
+        let cmds = []
+        const commandHelp = this.commandHelp()
+        if (commandHelp) {
+            cmds = [commandHelp]
+        }
 
-        var optionsText = [
+        const optionsText = [
             'Options:',
-            '' + this.optionHelp().replace(/^/gm, '  '),
+            `${this.optionHelp().replace(/^/gm, '  ')}`,
             '',
         ]
 
-        return usage
-            .concat(desc)
-            .concat(optionsText)
-            .concat(cmds)
-            .join('\n')
+        return usage.concat(desc).concat(optionsText).concat(cmds).join('\n')
     }
 
     /**
@@ -1038,9 +1072,11 @@ export class BotCommand extends EventEmitter {
         this._helpFlags = flags || this._helpFlags
         this._helpDescription = description || this._helpDescription
 
-        var splitFlags = this._helpFlags.split(/[ ,|]+/)
+        const splitFlags = this._helpFlags.split(/[ ,|]+/)
 
-        if (splitFlags.length > 1) this._helpShortFlag = splitFlags.shift()
+        if (splitFlags.length > 1) {
+            this._helpShortFlag = splitFlags.shift()
+        }
 
         this._helpLongFlag = splitFlags.shift()
 
@@ -1060,7 +1096,7 @@ export class BotCommand extends EventEmitter {
     private outputHelpIfNecessary(optionParams: string[]): string | null {
         optionParams = optionParams || []
 
-        for (var i = 0; i < optionParams.length; i++) {
+        for (let i = 0; i < optionParams.length; i++) {
             if (
                 optionParams[i] === this._helpLongFlag ||
                 optionParams[i] === this._helpShortFlag
@@ -1086,7 +1122,7 @@ function camelcase(flag) {
  * Pad `str` to `width`.
  */
 function pad(str, width) {
-    var len = Math.max(0, width - str.length)
+    const len = Math.max(0, width - str.length)
     return str + Array(len + 1).join(' ')
 }
 
@@ -1094,7 +1130,7 @@ function pad(str, width) {
  * Takes an argument and returns its human readable equivalent for help usage.
  */
 function humanReadableArgName(arg) {
-    var nameOutput = arg.name + (arg.variadic === true ? '...' : '')
+    const nameOutput = arg.name + (arg.variadic === true ? '...' : '')
 
-    return arg.required ? '<' + nameOutput + '>' : '[' + nameOutput + ']'
+    return arg.required ? `<${nameOutput}>` : `[${nameOutput}]`
 }

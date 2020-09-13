@@ -1,12 +1,12 @@
-import { BotCommand, MetaData, Option, ParserConfig } from './parser'
 import { IopaBotContext, RouterApp } from 'iopa-types'
+import { BotCommand, MetaData, Option, ParserConfig } from './parser'
 
 export const URN_BOTINTENT_LITERAL = 'urn:io.iopa.bot:intent:literal'
 
 export class BotCommanderMiddleware {
-    private app: RouterApp & { bot: BotCommand }
+    private app: RouterApp<{}, IopaBotContext> & { bot: BotCommand }
 
-    constructor(app: RouterApp & { bot: BotCommand }) {
+    constructor(app: RouterApp<{}, IopaBotContext> & { bot: BotCommand }) {
         this.app = app
 
         app.bot = new BotCommand()
@@ -21,12 +21,14 @@ export class BotCommanderMiddleware {
         next: () => Promise<void>
     ): Promise<void> {
         if (
-            context.botːIntent == 'urn:io.iopa.bot:intent:literal' &&
-            context.botːText
+            context['bot.Intent'] === 'urn:io.iopa.bot:intent:literal' &&
+            context['bot.Text']
         ) {
-            await this.app.bot.parse(context.botːText, context)
+            await this.app.bot.parse(context['bot.Text'], context)
             // never call next as we always complete inside the bot
-        } else return next()
+        } else {
+            await next()
+        }
     }
 }
 
