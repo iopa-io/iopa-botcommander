@@ -324,6 +324,7 @@ export class BotCommand extends EventEmitter {
                 await this.send(metadata, errors.join('\n'))
                 return
             }
+            data.raw = prevParsed.line
             try {
                 await fn.call(this, metadata.context, data)
             } catch (ex) {
