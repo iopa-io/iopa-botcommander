@@ -380,7 +380,7 @@ export class BotCommand extends EventEmitter {
             if (command) {
                 this.emit(`api:${name}`, metadata, data)
             } else {
-                resolve()
+                resolve(null)
             }
         })
 
