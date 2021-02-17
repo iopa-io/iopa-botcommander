@@ -16,7 +16,7 @@
  *
  * LICENSE AND COPYRIGHT FOR THIS FILE ONLY:  MIT
  *
- * Copyright (c) Offgrid Networks 2019
+ * Copyright (c) Guy Barnard 2019
  * Portions Copyright (c) 2011 TJ Holowaychuk <tj@vision-media.ca>
  * Portions Copyright (c) 2017 Ramiro Aparicio rapariciog@gmail.com
  *
